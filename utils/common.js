@@ -171,6 +171,10 @@ export const entryPoint = async () => {
             message: "Действие:",
             choices: [
                 {
+                    name: "Github search",
+                    value: "sybil-github",
+                },
+                {
                     name: "Sybil list",
                     value: "sybil-list",
                 },
@@ -205,4 +209,34 @@ export function privateKeyConvert(privateKey) {
     } else {
         return `0x${privateKey}`
     }
+}
+
+let proxies = readWallets('./proxies.txt')
+
+export function getProxy(index, isRandom = false) {
+    let agent
+    let proxy = null
+    if (proxies.length) {
+        if (proxies[index]) {
+            if (isRandom) {
+                proxy = proxies[random(0, proxies.length)]
+            } else {
+                proxy = proxies[index]
+            }
+        } else {
+            proxy = proxies[0]
+        }
+    }
+
+    if (proxy) {
+        if (proxy.includes('http')) {
+            agent = new HttpsProxyAgent(proxy)
+        }
+
+        if (proxy.includes('socks')) {
+            agent = new SocksProxyAgent(proxy)
+        }
+    }
+
+    return agent
 }

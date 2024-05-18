@@ -2,33 +2,39 @@ import {
     getKeyByValue,
     readWallets
 } from './utils/common.js'
+import axios from "axios"
 import { Table } from 'console-table-printer'
 import { createObjectCsvWriter } from 'csv-writer'
 import cliProgress from 'cli-progress'
+import { HttpsProxyAgent } from "https-proxy-agent"
+import { SocksProxyAgent } from "socks-proxy-agent"
 import Papa from "papaparse"
 import fs from "fs"
 
 let columns = [
-    { name: 'n', color: 'green', alignment: "right" },
-    { name: 'wallet', color: 'green', alignment: "right" },
-    { name: 'sybil', color: 'green', alignment: "right" },
+    { name: 'n', color: 'green', alignment: "right"},
+    { name: 'wallet', color: 'green', alignment: "right"},
+    { name: 'issues', color: 'green', alignment: "right"},
+    { name: 'sybil', color: 'green', alignment: "right"},
 ]
 
 let headers = [
-    { id: 'n', title: '№' },
-    { id: 'wallet', title: 'wallet' },
-    { id: 'sybil', title: 'sybil' },
+    { id: 'n', title: '№'},
+    { id: 'wallet', title: 'wallet'},
+    { id: 'issues', title: 'issues'},
+    { id: 'sybil', title: 'sybil'},
 ]
 
 let debug = false
 let p
 let csvWriter
 let wallets = readWallets('./addresses.txt')
+let proxies = readWallets('./proxies.txt')
 let iterations = wallets.length
 let iteration = 1
 let stats = []
-let data = []
 let csvData = []
+let data = []
 const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic)
 
 const csvFile = fs.readFileSync('./data/data.csv', 'utf8')
@@ -52,18 +58,67 @@ async function checkSybil(wallet) {
     }
 }
 
-async function fetchWallet(wallet, index) {
-    stats[wallet] = {
-        sybil: false
+async function checkGithub(wallet, proxy = null) {
+    let config = {
+        timeout: 5000
     }
 
-    await checkSybil(wallet)
+    if (proxy) {
+        if (proxy.includes('http')) {
+            config.httpsAgent = new HttpsProxyAgent(proxy)
+        }
+
+        if (proxy.includes('socks')) {
+            config.httpsAgent = new SocksProxyAgent(proxy)
+        }
+    }
+
+    let isFetched = false
+    let retries = 0
+
+    stats[wallet].issues = ''
+
+    checkSybil(wallet)
+
+    while (!isFetched) {
+        await axios.get(`https://api.github.com/search/issues?q=${encodeURIComponent(wallet)}+repo:LayerZero-Labs/sybil-report`, config).then(async response => {
+            stats[wallet].issues = response.data.items.map(issue => issue.html_url).join(', ')
+            isFetched = true
+        }).catch(e => {
+            if (debug) console.log('search', e.toString())
+
+            retries++
+
+            if (retries >= 3) {
+                isFetched = true
+            }
+        })
+    }
+}
+
+async function fetchWallet(wallet, index) {
+
+    let proxy = null
+    if (proxies.length) {
+        if (proxies[index]) {
+            proxy = proxies[index]
+        } else {
+            proxy = proxies[0]
+        }
+    }
+
+    stats[wallet] = {
+        issues: ''
+    }
+
+    await checkGithub(wallet, proxy)
 
     progressBar.update(iteration)
 
     let row = {
-        n: parseInt(index) + 1,
+        n: parseInt(index)+1,
         wallet: wallet,
+        issues: stats[wallet].issues,
         sybil: stats[wallet].sybil,
     }
 
@@ -76,10 +131,14 @@ async function fetchWallets() {
     iterations = wallets.length
     iteration = 1
     csvData = []
-
-
-    let batchSize = 100
+    
+    let batchSize = 1
     let timeout = 1000
+
+    if (proxies.length) {
+        batchSize = 10
+        timeout = 1000
+    }
 
     const batchCount = Math.ceil(wallets.length / batchSize)
     const walletPromises = []
@@ -90,7 +149,7 @@ async function fetchWallets() {
     })
 
     csvWriter = createObjectCsvWriter({
-        path: './result.csv',
+        path: './github-results.csv',
         header: headers
     })
 
@@ -124,23 +183,9 @@ async function saveToCsv() {
     csvWriter.writeRecords(csvData).then().catch()
 }
 
-async function addTotalRow() {
-    p.addRow({})
-    const sybilCount = Object.entries(stats).filter(([key, value]) => value.sybil === true).length
-    const walletsCount = wallets.length
-
-    let row = {
-        wallet: 'Total sybil count',
-        sybil: `${sybilCount} / ${walletsCount} (${((sybilCount / walletsCount) * 100).toFixed(0)}%)`
-    }
-
-    p.addRow(row, { color: "cyan" })
-}
-
-export async function layerzeroSybilChecker() {
+export async function layerzeroGithubSybilChecker() {
     progressBar.start(iterations, 0)
     await fetchWallets()
-    await addTotalRow()
     await saveToCsv()
     progressBar.stop()
     p.printTable()
