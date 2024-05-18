@@ -2,12 +2,9 @@ import {
     getKeyByValue,
     readWallets
 } from './utils/common.js'
-import axios from "axios"
 import { Table } from 'console-table-printer'
 import { createObjectCsvWriter } from 'csv-writer'
 import cliProgress from 'cli-progress'
-import { HttpsProxyAgent } from "https-proxy-agent"
-import { SocksProxyAgent } from "socks-proxy-agent"
 import Papa from "papaparse"
 import fs from "fs"
 
@@ -27,7 +24,6 @@ let debug = false
 let p
 let csvWriter
 let wallets = readWallets('./addresses.txt')
-let proxies = readWallets('./proxies.txt')
 let iterations = wallets.length
 let iteration = 1
 let stats = []
@@ -48,19 +44,9 @@ Papa.parse(csvFile, {
     }
 })
 
-async function checkSybil(wallet, proxy = null) {
+async function checkSybil(wallet) {
     let config = {
         timeout: 5000
-    }
-
-    if (proxy) {
-        if (proxy.includes('http')) {
-            config.httpsAgent = new HttpsProxyAgent(proxy)
-        }
-
-        if (proxy.includes('socks')) {
-            config.httpsAgent = new SocksProxyAgent(proxy)
-        }
     }
 
     let isFetched = false
@@ -71,39 +57,14 @@ async function checkSybil(wallet, proxy = null) {
     stats[wallet] = {
         sybil: data[wallet.toLowerCase()] ? true : false
     }
-
-    // while (!isFetched) {
-    //     await axios.get(`${wallet}`, config).then(async response => {
-    //         stats[wallet].sybil = response.data.amount ? parseFloat(response.data.amount, 0) : 0
-    //         isFetched = true
-    //     }).catch(e => {
-    //         if (debug) console.log('balances', e.toString())
-
-    //         retries++
-
-    //         if (retries >= 3) {
-    //             isFetched = true
-    //         }
-    //     })
-    // }
 }
 
 async function fetchWallet(wallet, index) {
-
-    let proxy = null
-    if (proxies.length) {
-        if (proxies[index]) {
-            proxy = proxies[index]
-        } else {
-            proxy = proxies[0]
-        }
-    }
-
     stats[wallet] = {
         sybil: false
     }
 
-    await checkSybil(wallet, proxy)
+    await checkSybil(wallet)
 
     progressBar.update(iteration)
 
@@ -123,13 +84,9 @@ async function fetchWallets() {
     iteration = 1
     csvData = []
 
-    let batchSize = 1
-    let timeout = 1000
 
-    if (proxies.length) {
-        batchSize = 100
-        timeout = 1000
-    }
+    let batchSize = 100
+    let timeout = 1000
 
     const batchCount = Math.ceil(wallets.length / batchSize)
     const walletPromises = []

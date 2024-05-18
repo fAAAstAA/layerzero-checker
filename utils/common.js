@@ -194,36 +194,6 @@ export function newAbortSignal(timeoutMs) {
     return abortController.signal
 }
 
-let proxies = readWallets('./proxies.txt')
-
-export function getProxy(index, isRandom = false) {
-    let agent
-    let proxy = null
-    if (proxies.length) {
-        if (proxies[index]) {
-            if (isRandom) {
-                proxy = proxies[random(0, proxies.length)]
-            } else {
-                proxy = proxies[index]
-            }
-        } else {
-            proxy = proxies[0]
-        }
-    }
-
-    if (proxy) {
-        if (proxy.includes('http')) {
-            agent = new HttpsProxyAgent(proxy)
-        }
-
-        if (proxy.includes('socks')) {
-            agent = new SocksProxyAgent(proxy)
-        }
-    }
-
-    return agent
-}
-
 export function sortObjectByKey(obj) {
     const sortedEntries = Object.entries(obj).sort((a, b) => a[0].localeCompare(b[0]))
     return Object.fromEntries(sortedEntries)
