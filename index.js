@@ -1,5 +1,6 @@
 import { layerzeroSybilChecker } from "./checker.js"
 import { layerzeroGithubSybilChecker } from "./github-checker.js"
+import { trustaSybilChecker } from "./trusta-checker.js"
 import { entryPoint } from "./utils/common.js"
 
 async function startMenu(menu) {
@@ -13,6 +14,9 @@ async function startMenu(menu) {
     switch (mode) {
         case "sybil-list":
             layerzeroSybilChecker()
+            break
+        case "trusta-list":
+            trustaSybilChecker()
             break
         case "sybil-github":
             layerzeroGithubSybilChecker()

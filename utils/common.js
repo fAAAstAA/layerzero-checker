@@ -171,6 +171,10 @@ export const entryPoint = async () => {
             message: "Действие:",
             choices: [
                 {
+                    name: "Trusta list",
+                    value: "trusta-list",
+                },
+                {
                     name: "Github search",
                     value: "sybil-github",
                 },
