@@ -24,7 +24,7 @@ let debug = false
 let p
 let csvWriter
 let wallets = readWallets('./addresses.txt')
-let trusta = readWallets('./data/trusta.txt')
+let trusta = readWallets('./data/commonwealth.txt')
 let iterations = wallets.length
 let iteration = 1
 let stats = []
