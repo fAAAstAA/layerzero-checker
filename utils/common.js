@@ -171,6 +171,10 @@ export const entryPoint = async () => {
             message: "Действие:",
             choices: [
                 {
+                    name: "Reports from tweet 06.06",
+                    value: "reports0606",
+                },
+                {
                     name: "Big clusters from commonwealth",
                     value: "commonwealth",
                 },

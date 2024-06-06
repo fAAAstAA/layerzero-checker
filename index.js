@@ -1,6 +1,6 @@
 import { layerzeroSybilChecker } from "./checker.js"
 import { layerzeroGithubSybilChecker } from "./github-checker.js"
-import { trustaSybilChecker } from "./commonweath-checker.js"
+import { commonwealthSybilChecker } from "./commonweath-checker.js"
 import { entryPoint } from "./utils/common.js"
 
 async function startMenu(menu) {
@@ -12,11 +12,14 @@ async function startMenu(menu) {
     }
 
     switch (mode) {
+        case "reports0606":
+            commonwealthSybilChecker('reports0606.txt')
+            break
         case "sybil-list":
             layerzeroSybilChecker()
             break
         case "commonwealth":
-            trustaSybilChecker()
+            commonwealthSybilChecker()
             break
         case "sybil-github":
             layerzeroGithubSybilChecker()

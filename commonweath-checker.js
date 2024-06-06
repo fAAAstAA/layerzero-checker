@@ -24,19 +24,20 @@ let debug = false
 let p
 let csvWriter
 let wallets = readWallets('./addresses.txt')
-let trusta = readWallets('./data/commonwealth.txt')
 let iterations = wallets.length
 let iteration = 1
 let stats = []
 let data = []
 let csvData = []
+let dataSource = 'commonwealth.txt'
 const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic)
 
 async function checkSybil(wallet) {
     stats[wallet].sybil = false
+    let commonwealthData = readWallets(`./data/${dataSource}`)
 
     stats[wallet] = {
-        sybil: trusta.includes(wallet.toLowerCase()) ? true : false
+        sybil: commonwealthData.includes(wallet.toLowerCase()) ? true : false
     }
 }
 
@@ -78,7 +79,7 @@ async function fetchWallets() {
     })
 
     csvWriter = createObjectCsvWriter({
-        path: './trusta-result.csv',
+        path: './commonwealth-result.csv',
         header: headers
     })
 
@@ -125,7 +126,8 @@ async function addTotalRow() {
     p.addRow(row, { color: "cyan" })
 }
 
-export async function trustaSybilChecker() {
+export async function commonwealthSybilChecker(file = 'commonwealth.txt') {
+    dataSource = file
     progressBar.start(iterations, 0)
     await fetchWallets()
     await addTotalRow()
