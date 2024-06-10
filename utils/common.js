@@ -175,6 +175,10 @@ export const entryPoint = async () => {
                     value: "report130k",
                 },
                 {
+                    name: "Stargate series",
+                    value: "stargate-series",
+                },
+                {
                     name: "Reports from tweet 06.06",
                     value: "reports0606",
                 },
