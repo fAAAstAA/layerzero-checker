@@ -12,7 +12,10 @@ async function startMenu(menu) {
     }
 
     switch (mode) {
-
+        case "report130k":
+            commonwealthSybilChecker('130kreport.txt')
+        case "stargate-series":
+            commonwealthSybilChecker('stargate-series.txt')
             break
         case "reports0606":
             commonwealthSybilChecker('reports0606.txt')
