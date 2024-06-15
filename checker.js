@@ -20,7 +20,6 @@ let headers = [
     { id: 'sybil', title: 'sybil' },
 ]
 
-let debug = false
 let p
 let csvWriter
 let wallets = readWallets('./addresses.txt')
