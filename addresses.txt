@@ -1,0 +1,4 @@
+git clone https://github.com/munris-vlad/layerzero-checker
+cd layerzero-checker
+npm i
+npm start
